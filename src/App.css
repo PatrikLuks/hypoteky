@@ -99,6 +99,44 @@
 .dashboard ul {
   list-style: disc inside;
   padding-left: 1rem;
+  margin-bottom: 0.5rem;
+}
+.dashboard select, .dashboard input[type="checkbox"] {
+  margin-left: 0.5em;
+  font-size: 1em;
+}
+.dashboard label {
+  font-size: 1em;
+  margin-right: 0.7em;
+}
+.dashboard .recharts-wrapper {
+  margin: 0 auto;
+}
+.dashboard b {
+  display: block;
+  margin-bottom: 0.5em;
+  color: #1976d2;
+}
+@media (max-width: 900px) {
+  .dashboard > div[style*="flex"] {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .dashboard > div[style*="width:320px"],
+  .dashboard > div[style*="width:260px"] {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    height: 220px !important;
+  }
+}
+@media (max-width: 700px) {
+  .dashboard {
+    padding: 1rem 0.5rem;
+  }
+  .dashboard label {
+    font-size: 0.97em;
+  }
 }
 input[type="text"]::placeholder {
   color: #aaa;
@@ -112,4 +150,240 @@ input[type="text"]::placeholder {
   .novy-pripad {
     flex-direction: column;
   }
+}
+
+.progress-bar-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 1.5rem 0;
+  min-height: 36px;
+  flex-wrap: wrap;
+  position: relative;
+}
+.progress-bar-timeline .timeline-done {
+  flex: 1;
+  height: 8px;
+  background: #1976d2;
+  border-radius: 4px;
+  position: relative;
+  margin-right: 2px;
+}
+.progress-bar-timeline .timeline-current {
+  flex: 1;
+  height: 12px;
+  background: linear-gradient(90deg, #90caf9 60%, #e3f2fd 100%);
+  border-radius: 6px;
+  position: relative;
+  margin-right: 2px;
+  box-shadow: 0 0 6px #1976d2aa;
+}
+.progress-bar-timeline .timeline-todo {
+  flex: 1;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  position: relative;
+  margin-right: 2px;
+}
+.progress-bar-timeline .timeline-dot {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2px solid #1976d2;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: -7px;
+  transform: translateY(-50%);
+  z-index: 2;
+  box-shadow: 0 0 2px #1976d2;
+}
+.progress-bar-timeline .timeline-current .timeline-dot {
+  background: #1976d2;
+  border-color: #1976d2;
+  box-shadow: 0 0 8px #1976d2;
+}
+.progress-bar-timeline .timeline-label {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.95em;
+  color: #1976d2;
+  background: #fff;
+  padding: 2px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px #0001;
+  white-space: nowrap;
+  z-index: 3;
+}
+.progress-bar-timeline .timeline-select {
+  margin-left: 16px;
+  min-width: 180px;
+  font-size: 1em;
+  padding: 0.3em 0.7em;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  background: #f5faff;
+  box-shadow: 0 1px 4px #0001;
+}
+@media (max-width: 700px) {
+  .progress-bar-timeline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+    min-height: unset;
+  }
+  .progress-bar-timeline .timeline-label {
+    top: 18px;
+    left: 0;
+    transform: none;
+    font-size: 0.9em;
+    padding: 2px 4px;
+  }
+  .progress-bar-timeline .timeline-select {
+    margin-left: 0;
+    margin-top: 8px;
+    min-width: 120px;
+  }
+}
+
+.notifikace-banner {
+  background: linear-gradient(90deg, #fffbe7 60%, #ffe082 100%);
+  color: #b26a00;
+  border: 1.5px solid #ffe082;
+  border-radius: 8px;
+  padding: 0.7em 1.2em;
+  margin-bottom: 1.2em;
+  font-size: 1.1em;
+  font-weight: 500;
+  box-shadow: 0 2px 8px #ffe08244;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+}
+.notifikace-term {
+  background: #fffde7;
+  border-left: 4px solid #ffb300;
+  padding: 0.5em 1em;
+  margin-bottom: 0.5em;
+  border-radius: 6px;
+  color: #b26a00;
+  font-size: 1em;
+}
+.badge-term {
+  display: inline-block;
+  background: #ffb300;
+  color: #fff;
+  border-radius: 50%;
+  width: 1.3em;
+  height: 1.3em;
+  text-align: center;
+  font-weight: bold;
+  margin-right: 0.4em;
+  font-size: 1em;
+  line-height: 1.3em;
+  box-shadow: 0 1px 4px #ffb30044;
+}
+@media (max-width: 700px) {
+  .notifikace-banner {
+    font-size: 1em;
+    padding: 0.5em 0.7em;
+  }
+  .notifikace-term {
+    font-size: 0.97em;
+    padding: 0.4em 0.6em;
+  }
+}
+
+@media (max-width: 700px) {
+  .container {
+    padding: 0.5rem;
+    max-width: 100vw;
+  }
+  .novy-pripad {
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 0.5rem 0;
+  }
+  .novy-pripad input, .novy-pripad select, .novy-pripad button {
+    width: 100%;
+    min-width: 0;
+    font-size: 1em;
+    box-sizing: border-box;
+  }
+  .pripady {
+    gap: 1.2rem;
+  }
+  .pripad {
+    padding: 0.7rem 0.3rem;
+    font-size: 0.98em;
+    border-radius: 6px;
+  }
+  .pripad h2 {
+    font-size: 1.1em;
+    margin-bottom: 0.2em;
+  }
+  .pripad li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    font-size: 0.97em;
+  }
+  .pripad input[type="date"], .pripad input[type="text"], .pripad input[type="number"] {
+    width: 100%;
+    min-width: 0;
+    font-size: 1em;
+    margin: 0.1em 0;
+  }
+  .pripad button {
+    width: 100%;
+    margin: 0.1em 0;
+    font-size: 1em;
+  }
+  .progress-bar-timeline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+    min-height: unset;
+  }
+  .progress-bar-timeline .timeline-label {
+    top: 18px;
+    left: 0;
+    transform: none;
+    font-size: 0.9em;
+    padding: 2px 4px;
+  }
+  .progress-bar-timeline .timeline-select {
+    margin-left: 0;
+    margin-top: 8px;
+    min-width: 120px;
+  }
+  .dashboard {
+    padding: 1rem 0.5rem;
+  }
+  .dashboard label {
+    font-size: 0.97em;
+  }
+}
+
+/* Rychlé akce */
+.pripad .rychle-akce {
+  display: flex;
+  gap: 0.5em;
+  margin-bottom: 0.5em;
+  flex-wrap: wrap;
+}
+.pripad .rychle-akce button {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #90caf9;
+  border-radius: 6px;
+  font-size: 0.95em;
+  padding: 0.2em 0.8em;
+  transition: background 0.2s;
+}
+.pripad .rychle-akce button:hover {
+  background: #bbdefb;
 }
