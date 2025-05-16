@@ -5,42 +5,6 @@
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
 .container {
   max-width: 900px;
   margin: 0 auto;
@@ -49,6 +13,7 @@
 }
 .novy-pripad {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -94,4 +59,57 @@
 .pripad button {
   font-size: 0.9rem;
   padding: 0.2rem 0.7rem;
+}
+
+.select-banka {
+  min-width: 220px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  background: #fff;
+  margin-bottom: 0.5rem;
+}
+.select-banka:focus {
+  outline: 2px solid #1976d2;
+  border-color: #1976d2;
+}
+.select-banka option[disabled] {
+  color: #888;
+}
+
+.krok-aktualni {
+  background: #e3f2fd;
+  border-left: 4px solid #1976d2;
+}
+.krok-hotovo {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+.dashboard {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px #0001;
+}
+.dashboard h2 {
+  margin-top: 0;
+}
+.dashboard ul {
+  list-style: disc inside;
+  padding-left: 1rem;
+}
+input[type="text"]::placeholder {
+  color: #aaa;
+}
+
+/* Základní responsivita */
+@media (max-width: 700px) {
+  .pripad {
+    padding: 1rem 0.5rem;
+  }
+  .novy-pripad {
+    flex-direction: column;
+  }
 }
