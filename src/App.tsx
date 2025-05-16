@@ -1,9 +1,30 @@
-import { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import './App.css';
 import notificationSound from './assets/notification.mp3';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import type { TransitionProps } from '@mui/material/transitions';
+import { ThemeProvider, createTheme, CssBaseline, AppBar, Toolbar, Typography, IconButton, Container, Card, CardContent, Paper, Box, Avatar, Snackbar, Button, TextField, Select, MenuItem, FormControl, InputLabel, useMediaQuery, Dialog, DialogTitle, DialogContent, DialogActions, Slide, Stepper, Step, StepLabel, StepContent, Button as MUIButton, TextField as MUITextField } from '@mui/material';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ArchiveIcon from '@mui/icons-material/Archive';
+import UnarchiveIcon from '@mui/icons-material/Unarchive';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+import RestoreIcon from '@mui/icons-material/Restore';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import MuiAlert from '@mui/material/Alert';
+import type { AlertColor } from '@mui/material/Alert';
+import Fab from '@mui/material/Fab';
+import Grid from '@mui/material/Grid';
+
+// Přechod pro dialog (slide up)
+const Transition = React.forwardRef<HTMLDivElement, TransitionProps & { children: React.ReactElement }>(
+  (props, ref) => {
+    return <Slide direction="up" ref={ref} {...props} />;
+  }
+);
 
 // Definice kroků procesu hypotéky
 const KROKY = [
@@ -90,25 +111,6 @@ interface PripadHypoteky {
   archivovano?: boolean; // nově pro archivaci
 }
 
-// Pomocná funkce pro formátování čísel s oddělením po 3 cifrách
-function formatCislo(cislo: string) {
-  if (!cislo) return '';
-  const num = Number(cislo);
-  if (isNaN(num)) return cislo;
-  return num.toLocaleString('cs-CZ');
-}
-
-// Pomocná funkce pro automatické generování termínů
-function generujTerminy(vychoziDatum: string, pocetKroku: number, intervalDni = 7) {
-  const terminy: string[] = [];
-  let datum = new Date(vychoziDatum); // eslint-disable-line prefer-const
-  for (let i = 0; i < pocetKroku; i++) {
-    datum.setDate(datum.getDate() + intervalDni);
-    terminy.push(datum.toISOString().slice(0, 10));
-  }
-  return terminy;
-}
-
 // Funkce pro upozornění na blížící se termíny (do 7 dnů)
 function bliziciSeTerminy(pripad: PripadHypoteky) {
   const dnes = new Date('2025-05-16'); // aktuální datum
@@ -130,13 +132,6 @@ function bliziciSeTerminy(pripad: PripadHypoteky) {
   });
   return upozorneni;
 }
-
-// Zvýraznění aktuálního kroku
-const getKrokClass = (pripad: PripadHypoteky, idx: number) => {
-  if (idx === pripad.aktualniKrok) return 'krok-aktualni';
-  if (idx < pripad.aktualniKrok) return 'krok-hotovo';
-  return '';
-};
 
 // Export do CSV
 function exportToCSV(pripady: PripadHypoteky[]) {
@@ -216,14 +211,30 @@ function App() {
   const [krok2Urok, setKrok2Urok] = useState('');
   const [krok3Banka, setKrok3Banka] = useState('');
   const [krok3Vlastni, setKrok3Vlastni] = useState('');
-  const [zobrazChybu, setZobrazChybu] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
-  const [searchPoradce, setSearchPoradce] = useState('');
   const [zvukAbsolvovany, setZvukAbsolvovany] = useState(false);
   const [stavKrokuFilter, setStavKrokuFilter] = useState('');
   const [zobrazArchivovane, setZobrazArchivovane] = useState(false);
   const [aktivniPoradce, setAktivniPoradce] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState<{open: boolean, message: string, severity?: AlertColor}>({open: false, message: ''});
+  const [bottomNav, setBottomNav] = useState('cases');
+
+  const theme = useMemo(() => createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+      primary: { main: '#1976d2' },
+      secondary: { main: '#ffa000' },
+      background: { default: darkMode ? '#181c24' : '#f4f6fa' }
+    },
+    shape: { borderRadius: 10 },
+    typography: { fontFamily: 'Inter, Roboto, Arial, sans-serif' }
+  }), [darkMode]);
+
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Získat seznam všech poradců z případů
   const poradci = Array.from(new Set(pripady.map(p => p.poradce).filter(Boolean)));
@@ -306,22 +317,10 @@ function App() {
     }
   });
 
-  // Funkce pro výpočet vlastních připomenutí
-  function vlastniPripomenuti(pripad: PripadHypoteky) {
-    const dnes = new Date('2025-05-16');
-    const upozorneni: string[] = [];
-    pripad.kroky.forEach((krok) => {
-      if (krok.termin && krok.pripomenoutZa && !krok.splneno) {
-        const datumKroku = new Date(krok.termin);
-        const datumPripomenuti = new Date(datumKroku);
-        datumPripomenuti.setDate(datumKroku.getDate() - krok.pripomenoutZa);
-        if (dnes >= datumPripomenuti && dnes < datumKroku) {
-          upozorneni.push(`${krok.nazev}: připomenutí za ${krok.pripomenoutZa} dní před termínem (${krok.termin})`);
-        }
-      }
-    });
-    return upozorneni;
-  }
+  // Helper pro otevření snackbaru
+  const showSnackbar = (message: string, severity: AlertColor = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
 
   // Import z CSV (základní podpora)
   function importFromCSV(e: React.ChangeEvent<HTMLInputElement>) {
@@ -355,65 +354,26 @@ function App() {
         });
       }
       setPripady(data);
+      showSnackbar('Data byla úspěšně importována', 'success');
     };
     reader.readAsText(file);
   }
 
-  // Přidání nového případu
-  const pridejPripad = () => {
-    setZobrazChybu(false);
-    const vybranaBanka = krok3Banka === 'Další (ručně)' ? krok3Vlastni : krok3Banka;
-    // Pokud je zadán termín návrhu, vygeneruj automaticky termíny pro další kroky (krok 4+)
-    let noveKroky = KROKY.slice(3).map((nazev) => ({
-      nazev,
-      termin: '',
-      splneno: false,
-      splnenoAt: undefined,
-      poznamka: ''
-    }));
-    if (krok2Termin) {
-      const terminy = generujTerminy(krok2Termin, noveKroky.length);
-      noveKroky = noveKroky.map((k, i) => ({ ...k, termin: terminy[i] }));
-    }
-    setPripady([
-      ...pripady,
-      {
-        id: pripady.length + 1,
-        klient: novyKlient,
-        poradce: novyPoradce,
-        aktualniKrok: 0,
-        krok1: { co: krok1Co, castka: krok1Castka, popis: krok1Popis },
-        krok2: { termin: krok2Termin, urok: krok2Urok },
-        krok3: { banka: vybranaBanka },
-        kroky: noveKroky,
-        poznamka: poznamka || undefined,
-        archivovano: false
-      },
-    ]);
-    setNovyKlient('');
-    setNovyPoradce('');
-    setPoznamka('');
-    setKrok1Co('');
-    setKrok1Castka('');
-    setKrok1Popis('');
-    setKrok2Termin('');
-    setKrok2Urok('');
-    setKrok3Banka('');
-    setKrok3Vlastni('');
-  };
-
   // Smazání případu
   const smazatPripad = (id: number) => {
     setPripady(pripady.filter(p => p.id !== id));
+    showSnackbar('Případ byl úspěšně smazán', 'success');
   };
 
   // Archivace případu
   const archivovatPripad = (id: number) => {
     setPripady(pripady.map(p => p.id === id ? { ...p, archivovano: true } : p));
+    showSnackbar('Případ byl archivován', 'info');
   };
 
   const obnovitPripad = (id: number) => {
     setPripady(pripady.map(p => p.id === id ? { ...p, archivovano: false } : p));
+    showSnackbar('Případ byl obnoven z archivu', 'info');
   };
 
   // Editace případu (základní: pouze předvyplnění formuláře, úprava po přidání)
@@ -429,6 +389,7 @@ function App() {
     setKrok2Urok(pripad.krok2.urok);
     setKrok3Banka(BANKY.includes(pripad.krok3.banka) ? pripad.krok3.banka : 'Další (ručně)');
     setKrok3Vlastni(BANKY.includes(pripad.krok3.banka) ? '' : pripad.krok3.banka);
+    setOpenEditDialog(true);
   };
 
   // Uložení editovaného případu
@@ -461,6 +422,7 @@ function App() {
     setKrok2Urok('');
     setKrok3Banka('');
     setKrok3Vlastni('');
+    showSnackbar('Případ byl úspěšně upraven', 'success');
   };
 
   // Označení kroku jako splněného a posun na další krok
@@ -488,40 +450,6 @@ function App() {
     }));
   };
 
-  // Přesun na předchozí/další krok
-  const posunKrok = (pripadId: number, novyKrok: number) => {
-    setPripady(pripady.map(pripad => {
-      if (pripad.id !== pripadId) return pripad;
-      return { ...pripad, aktualniKrok: novyKrok };
-    }));
-  };
-
-  // Export přehledu případu do PDF
-  const exportPripadPDF = async (pripadId: number) => {
-    const el = document.getElementById('pripad-pdf-'+pripadId);
-    if (!el) return;
-    const canvas = await html2canvas(el, {scale:2, useCORS:true});
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({orientation:'p',unit:'pt',format:'a4'});
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const imgWidth = pageWidth-40;
-    const imgHeight = canvas.height * imgWidth / canvas.width;
-    pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
-    pdf.save('pripad-'+pripadId+'.pdf');
-  };
-
-  // Data pro graf: rozložení případů podle aktuálního kroku
-  const rozlozeniKroku = KROKY.slice(3).map((k, idx) => ({
-    krok: `${idx+4}. ${k}`,
-    pocet: pripady.filter(p => !p.archivovano && p.aktualniKrok === idx).length
-  }));
-
-  // Data pro graf: rozložení případů podle banky
-  const rozlozeniBanky = Array.from(new Set(pripady.map(p => p.krok3.banka))).map(banka => ({
-    banka,
-    pocet: pripady.filter(p => p.krok3.banka === banka && !p.archivovano).length
-  })).filter(b => b.pocet > 0);
-
   // Průměrná doba od zadání do posledního splněného kroku (jen pro dokončené)
   const prumDoba = (() => {
     const hotove = pripady.filter(p => !p.archivovano && p.kroky.every(k => k.splneno));
@@ -546,398 +474,219 @@ function App() {
   });
 
   return (
-    <div className="container">
-      <h1>Správa hypoték</h1>
-      {/* Simulace e-mailového upozornění/banner */}
-      {pocetBlizicich > 0 && (
-        <div className="notifikace-banner">
-          <b>Upozornění:</b> Máš {pocetBlizicich} případ{pocetBlizicich === 1 ? '' : pocetBlizicich < 5 ? 'y' : 'ů'} s blížícím se termínem!
-        </div>
-      )}
-      <div className="novy-pripad">
-        <input
-          type="text"
-          placeholder="Jméno klienta"
-          value={novyKlient}
-          onChange={e => setNovyKlient(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Poradce (jméno)"
-          value={novyPoradce}
-          onChange={e => setNovyPoradce(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Co chce klient financovat? (např. byt, dům)"
-          value={krok1Co}
-          onChange={e => setKrok1Co(e.target.value)}
-        />
-        <input
-          type="number"
-          placeholder="Za kolik (Kč)"
-          value={krok1Castka}
-          onChange={e => setKrok1Castka(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Popis (nepovinné)"
-          value={krok1Popis}
-          onChange={e => setKrok1Popis(e.target.value)}
-        />
-        <input
-          type="date"
-          placeholder="Datum návrhu financování"
-          value={krok2Termin}
-          onChange={e => setKrok2Termin(e.target.value)}
-        />
-        <input
-          type="number"
-          step="0.01"
-          placeholder="Výše úroku (%)"
-          value={krok2Urok}
-          onChange={e => setKrok2Urok(e.target.value)}
-        />
-        <select className="select-banka" value={krok3Banka} onChange={e => setKrok3Banka(e.target.value)}>
-          <option value="" disabled>Vyberte banku nebo instituci…</option>
-          <optgroup label="Nejčastější banky">
-            <option value="Česká spořitelna">Česká spořitelna</option>
-            <option value="Komerční banka">Komerční banka</option>
-            <option value="ČSOB">ČSOB</option>
-            <option value="UniCredit Bank">UniCredit Bank</option>
-            <option value="Raiffeisenbank">Raiffeisenbank</option>
-            <option value="Moneta Money Bank">Moneta Money Bank</option>
-            <option value="mBank">mBank</option>
-            <option value="Fio banka">Fio banka</option>
-            <option value="Air Bank">Air Bank</option>
-            <option value="Hypoteční banka">Hypoteční banka</option>
-          </optgroup>
-          <optgroup label="Další instituce">
-            <option value="Sberbank">Sberbank</option>
-            <option value="Equa bank">Equa bank</option>
-            <option value="Oberbank">Oberbank</option>
-            <option value="Expobank">Expobank</option>
-            <option value="Hello bank!">Hello bank!</option>
-            <option value="Trinity Bank">Trinity Bank</option>
-            <option value="Wüstenrot hypoteční banka">Wüstenrot hypoteční banka</option>
-          </optgroup>
-          <option value="Další (ručně)">Jiná (zadám ručně)</option>
-        </select>
-        {krok3Banka === 'Další (ručně)' && (
-          <input
-            type="text"
-            placeholder="Zadejte název banky/instituce"
-            value={krok3Vlastni}
-            onChange={e => setKrok3Vlastni(e.target.value)}
-          />
-        )}
-        <input
-          type="text"
-          placeholder="Poznámka (nepovinné)"
-          value={poznamka}
-          onChange={e => setPoznamka(e.target.value)}
-        />
-        {editId ? (
-          <>
-            <button onClick={ulozitEditaci}>Uložit změny</button>
-            <button onClick={() => setEditId(null)}>Zrušit</button>
-          </>
-        ) : (
-          <button onClick={pridejPripad}>Přidat případ</button>
-        )}
-      </div>
-      {zobrazChybu && (
-        <div style={{color: 'red', marginBottom: '1rem'}}>Nastala chyba při přidávání případu.</div>
-      )}
-      <div className="dashboard">
-        <h2>Přehled</h2>
-        <div style={{marginBottom:'1rem'}}>
-          <label>Aktivní poradce: </label>
-          <select value={aktivniPoradce} onChange={e => setAktivniPoradce(e.target.value)}>
-            <option value="">Všichni poradci</option>
-            {poradci.map(jmeno => (
-              <option key={jmeno} value={jmeno}>{jmeno}</option>
-            ))}
-          </select>
-        </div>
-        <ul>
-          <li>Počet rozpracovaných případů: {pripady.filter(p => !p.archivovano).length}</li>
-          <li>Počet případů s blížícím se termínem: {pripady.filter(p => !p.archivovano && bliziciSeTerminy(p).length > 0).length}</li>
-          <li>Počet dokončených případů: {pripady.filter(p => !p.archivovano && p.aktualniKrok === KROKY.length - 3 && p.kroky.every(k => k.splneno)).length}</li>
-          <li>Počet archivovaných případů: {pripady.filter(p => p.archivovano).length}</li>
-          <li>Průměrná doba zpracování: {prumDoba}</li>
-        </ul>
-        <div style={{display:'flex',gap:'2rem',flexWrap:'wrap',margin:'1.5rem 0'}}>
-          <div style={{width:'320px',height:'220px',background:'#fff',borderRadius:8,boxShadow:'0 2px 8px #0001',padding:'1rem'}}>
-            <b>Rozložení případů podle kroku</b>
-            <ResponsiveContainer width="100%" height={160}>
-              <BarChart data={rozlozeniKroku}>
-                <XAxis dataKey="krok" fontSize={12} interval={0} angle={-30} textAnchor="end" height={60}/>
-                <YAxis allowDecimals={false}/>
-                <Tooltip/>
-                <Bar dataKey="pocet" fill="#1976d2" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div style={{width:'260px',height:'220px',background:'#fff',borderRadius:8,boxShadow:'0 2px 8px #0001',padding:'1rem'}}>
-            <b>Rozložení případů podle banky</b>
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie data={rozlozeniBanky} dataKey="pocet" nameKey="banka" cx="50%" cy="50%" outerRadius={60} label>
-                  {rozlozeniBanky.map((_, idx) => (
-                    <Cell key={idx} fill={["#1976d2","#388e3c","#ffa000","#d32f2f","#7b1fa2"][idx%5]} />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AppBar position="sticky" elevation={2} sx={{backdropFilter:'blur(8px)',background:darkMode?'rgba(24,28,36,0.95)':'rgba(255,255,255,0.85)',color:darkMode?'#fff':'#1976d2'}}>
+        <Toolbar>
+          <Typography variant="h5" sx={{flexGrow:1,fontWeight:700,letterSpacing:1}}>Správa hypoték</Typography>
+          <IconButton color="inherit" onClick={() => setDarkMode(d => !d)}>
+            {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+      <Container maxWidth="lg" sx={{py: isMobile ? 1 : 4}}>
+        <Box sx={{display:'flex',flexDirection:isMobile?'column':'row',gap:4}}>
+          <Paper elevation={4} sx={{borderRadius:5,backdropFilter:'blur(8px)',background:darkMode?'rgba(30,34,44,0.85)':'rgba(255,255,255,0.85)',p:isMobile?2:3,mb:3,minWidth:isMobile?'100%':'340px',maxWidth:'400px',flex:'0 0 340px',position:'sticky',top:theme.spacing(2),zIndex:2}}>
+            <Typography variant="h6" sx={{fontWeight:600,mb:2}}>Přehled</Typography>
+            <Box component="ul" sx={{pl:2,mb:2}}>
+              <li>Počet rozpracovaných případů: <b>{pripady.filter(p => !p.archivovano).length}</b></li>
+              <li>Počet případů s blížícím se termínem: <b>{pripady.filter(p => !p.archivovano && bliziciSeTerminy(p).length > 0).length}</b></li>
+              <li>Počet dokončených případů: <b>{pripady.filter(p => !p.archivovano && p.aktualniKrok === KROKY.length - 3 && p.kroky.every(k => k.splneno)).length}</b></li>
+              <li>Počet archivovaných případů: <b>{pripady.filter(p => p.archivovano).length}</b></li>
+              <li>Průměrná doba zpracování: <b>{prumDoba}</b></li>
+            </Box>
+            <Box sx={{display:'flex',flexDirection:'column',gap:2,mb:2}}>
+              <FormControl fullWidth size="small">
+                <InputLabel id="aktivni-poradce-label">Aktivní poradce</InputLabel>
+                <Select labelId="aktivni-poradce-label" value={aktivniPoradce} label="Aktivní poradce" onChange={e => setAktivniPoradce(e.target.value)}>
+                  <MenuItem value="">Všichni poradci</MenuItem>
+                  {poradci.map(jmeno => (
+                    <MenuItem key={jmeno} value={jmeno}>{jmeno}</MenuItem>
                   ))}
-                </Pie>
-                <Tooltip/>
-                <Legend/>
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <button onClick={() => exportToCSV(pripady)} style={{marginTop:'1rem'}}>Exportovat do CSV</button>
-        <label style={{marginLeft:'1rem', cursor:'pointer'}}>
-          <input type="file" accept=".csv" style={{display:'none'}} onChange={importFromCSV} />
-          <span style={{textDecoration:'underline', color:'#1976d2'}}>Importovat z CSV</span>
-        </label>
-        <button onClick={() => exportToJSON(pripady)} style={{marginLeft:'1rem'}}>Exportovat do JSON</button>
-        <label style={{marginLeft:'1rem', cursor:'pointer'}}>
-          <input type="file" accept=".json" style={{display:'none'}} onChange={importFromJSON} />
-          <span style={{textDecoration:'underline', color:'#1976d2'}}>Importovat z JSON</span>
-        </label>
-        <div style={{marginTop:'1rem',display:'flex',gap:'1.5rem',flexWrap:'wrap',alignItems:'center'}}>
-          {/* Filtrování podle poradce je nyní vázáno na aktivního poradce */}
-          <div>
-            <label>Filtrovat podle poradce: </label>
-            <select value={searchPoradce} onChange={e => setSearchPoradce(e.target.value)} disabled={!!aktivniPoradce}>
-              <option value="">Všichni</option>
-              {poradci.map(jmeno => (
-                <option key={jmeno} value={jmeno}>{jmeno}</option>
-              ))}
-            </select>
-            {aktivniPoradce && <span style={{color:'#888',fontSize:'0.95em',marginLeft:6}}>(používá se výběr výše)</span>}
-          </div>
-          <div>
-            <label>Filtrovat podle stavu kroku: </label>
-            <select value={stavKrokuFilter} onChange={e => setStavKrokuFilter(e.target.value)}>
-              <option value="">Všechny stavy</option>
-              {KROKY.slice(3).map((k, idx) => (
-                <option key={idx} value={k}>{k}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label>
-              <input type="checkbox" checked={zobrazArchivovane} onChange={e => setZobrazArchivovane(e.target.checked)} />
-              Zobrazit archivované
-            </label>
-          </div>
-        </div>
-      </div>
-      <div className="pripady">
-        <input
-          type="text"
-          placeholder="Vyhledat klienta, banku, poznámku..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{marginBottom: '1rem', minWidth: '250px'}}
-        />
-        {pripady.filter(p =>
-          !p.archivovano &&
-          (aktivniPoradce ? p.poradce === aktivniPoradce : (searchPoradce === '' || p.poradce === searchPoradce)) &&
-          (stavKrokuFilter === '' || KROKY[p.aktualniKrok + 3] === stavKrokuFilter) &&
-          (p.klient.toLowerCase().includes(search.toLowerCase()) ||
-          p.krok3.banka.toLowerCase().includes(search.toLowerCase()) ||
-          (p.poznamka && p.poznamka.toLowerCase().includes(search.toLowerCase()))
-          )
-        ).length === 0 && <p>Žádné případy neodpovídají filtru.</p>}
-        {pripady.filter(p =>
-          (zobrazArchivovane ? true : !p.archivovano) &&
-          (aktivniPoradce ? p.poradce === aktivniPoradce : (searchPoradce === '' || p.poradce === searchPoradce)) &&
-          (stavKrokuFilter === '' || KROKY[p.aktualniKrok + 3] === stavKrokuFilter) &&
-          (p.klient.toLowerCase().includes(search.toLowerCase()) ||
-          p.krok3.banka.toLowerCase().includes(search.toLowerCase()) ||
-          (p.poznamka && p.poznamka.toLowerCase().includes(search.toLowerCase()))
-          )
-        ).map(pripad => {
-          const upozorneni = bliziciSeTerminy(pripad);
-          return (
-            <div key={pripad.id} className="pripad" id={'pripad-pdf-'+pripad.id}>
-              <div style={{display:'flex', gap:'1rem', alignItems:'center'}}>
-                <h2>{pripad.klient}</h2>
-                <span style={{fontSize:'0.95em', color:'#1976d2'}}>Poradce: {pripad.poradce}</span>
-                <button onClick={() => editovatPripad(pripad)}>Editovat</button>
-                <button onClick={() => smazatPripad(pripad.id)} style={{color:'red'}}>Smazat</button>
-                {!pripad.archivovano ? (
-                  <button onClick={() => archivovatPripad(pripad.id)} style={{color:'#888'}}>Archivovat</button>
-                ) : (
-                  <button onClick={() => obnovitPripad(pripad.id)} style={{color:'#1976d2'}}>Obnovit</button>
-                )}
-              </div>
-              {/* Progress bar/timeline */}
-              <div className="progress-bar-timeline">
-                {KROKY.slice(3).map((k, idx) => (
-                  <div key={idx} className={
-                    idx < pripad.aktualniKrok ? 'timeline-done' : idx === pripad.aktualniKrok ? 'timeline-current' : 'timeline-todo'
-                  }>
-                    <div className="timeline-dot" />
-                    {idx === pripad.aktualniKrok && (
-                      <span className="timeline-label">{k}</span>
-                    )}
-                  </div>
-                ))}
-                <select className="timeline-select" value={pripad.aktualniKrok} onChange={e => posunKrok(pripad.id, Number(e.target.value))}>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth size="small">
+                <InputLabel id="stav-kroku-label">Filtrovat podle stavu kroku</InputLabel>
+                <Select labelId="stav-kroku-label" value={stavKrokuFilter} label="Filtrovat podle stavu kroku" onChange={e => setStavKrokuFilter(e.target.value)}>
+                  <MenuItem value="">Všechny stavy</MenuItem>
                   {KROKY.slice(3).map((k, idx) => (
-                    <option key={idx} value={idx}>{idx+4}. {k}</option>
+                    <MenuItem key={idx} value={k}>{k}</MenuItem>
                   ))}
-                </select>
-              </div>
-              <p><b>Poradce:</b> {pripad.poradce}</p>
-              <p><b>Krok 1: Co chce klient financovat?</b></p>
-              <ul>
-                <li><b>Předmět:</b> {pripad.krok1.co}</li>
-                <li><b>Částka:</b> {formatCislo(pripad.krok1.castka)} Kč</li>
-                {pripad.krok1.popis && <li><b>Popis:</b> {pripad.krok1.popis}</li>}
-              </ul>
-              <p><b>Krok 2: Návrh financování</b></p>
-              <ul>
-                <li><b>Datum návrhu:</b> {pripad.krok2.termin}</li>
-                <li><b>Výše úroku:</b> {pripad.krok2.urok} %</li>
-              </ul>
-              <p><b>Krok 3: Výběr banky</b></p>
-              <ul>
-                <li><b>Banka/instituce:</b> {pripad.krok3?.banka || '-'}</li>
-              </ul>
-              {upozorneni.length > 0 && (
-                <div className="notifikace-term">
-                  <b>Upozornění na blížící se termíny:</b>
-                  <ul>
-                    {upozorneni.map((u, i) => <li key={i}><span className="badge-term">⚠</span> {u}</li>)}
-                  </ul>
-                </div>
-              )}
-              {/* Vlastní upozornění na připomenutí */}
-              {vlastniPripomenuti(pripad).length > 0 && (
-                <div className="notifikace-term" style={{background:'#e3f2fd',borderLeft:'4px solid #1976d2',color:'#1976d2'}}>
-                  <b>Vlastní upozornění:</b>
-                  <ul>
-                    {vlastniPripomenuti(pripad).map((u, i) => <li key={i}><span className="badge-term">⏰</span> {u}</li>)}
-                  </ul>
-                </div>
-              )}
-              <p>Aktuální krok: <b>{KROKY[pripad.aktualniKrok + 2]}</b></p>
-              {pripad.poznamka && <p>Poznámka: {pripad.poznamka}</p>}
-              {/* Rychlé akce pro poradce */}
-              <div className="rychle-akce">
-                <button onClick={() => {
-                  // Označit všechny kroky jako splněné
-                  setPripady(pripady.map(p =>
-                    p.id === pripad.id
-                      ? {
-                          ...p,
-                          kroky: p.kroky.map((k) => ({
-                            ...k,
-                            splneno: true,
-                            splnenoAt: k.splnenoAt || new Date().toISOString().slice(0,10)
-                          })),
-                          aktualniKrok: KROKY.length - 3
-                        }
-                      : p
-                  ));
-                }}>Označit vše jako splněné</button>
-                <button onClick={() => {
-                  // Posunout na další krok
-                  setPripady(pripady.map(p =>
-                    p.id === pripad.id
-                      ? {
-                          ...p,
-                          aktualniKrok: Math.min(p.aktualniKrok + 1, KROKY.length - 3)
-                        }
-                      : p
-                  ));
-                }}>Posunout na další krok</button>
-                <button onClick={() => {
-                  // Vrátit na předchozí krok
-                  setPripady(pripady.map(p =>
-                    p.id === pripad.id
-                      ? {
-                          ...p,
-                          aktualniKrok: Math.max(p.aktualniKrok - 1, 0)
-                        }
-                      : p
-                  ));
-                }}>Zpět na předchozí krok</button>
-                <button onClick={() => exportPripadPDF(pripad.id)} style={{background:'#fffde7',color:'#b26a00',border:'1px solid #ffe082'}}>Tisk / PDF</button>
-              </div>
-              <ol>
-                {pripad.kroky.map((krok, idx) => (
-                  <li key={idx} className={krok.splneno ? 'splneno ' + getKrokClass(pripad, idx) : getKrokClass(pripad, idx)}>
-                    <span>{krok.nazev}</span>
-                    <input
-                      type="date"
-                      value={krok.termin}
-                      onChange={e => nastavTermin(pripad.id, idx, e.target.value)}
-                      title="Deadline"
-                    />
-                    <input
-                      type="number"
-                      min="1"
-                      max="60"
-                      placeholder="Připomenout za X dní před termínem"
-                      value={krok.pripomenoutZa ?? ''}
-                      onChange={e => {
-                        const val = e.target.value ? Number(e.target.value) : undefined;
-                        setPripady(pripady.map(p => {
-                          if (p.id !== pripad.id) return p;
-                          const noveKroky = [...p.kroky];
-                          noveKroky[idx] = { ...noveKroky[idx], pripomenoutZa: val };
-                          return { ...p, kroky: noveKroky };
-                        }));
-                      }}
-                      style={{width:60,marginLeft:6}}
-                      title="Vlastní upozornění na připomenutí"
-                    />
-                    {krok.splneno && (
-                      <span style={{color: 'green', fontSize: '0.9em'}}>Splněno: {krok.splnenoAt}</span>
-                    )}
-                    <input
-                      type="text"
-                      placeholder="Poznámka ke kroku"
-                      value={krok.poznamka}
-                      onChange={e => {
-                        setPripady(pripady.map(p => {
-                          if (p.id !== pripad.id) return p;
-                          const noveKroky = [...p.kroky];
-                          noveKroky[idx] = { ...noveKroky[idx], poznamka: e.target.value };
-                          return { ...p, kroky: noveKroky };
-                        }));
-                      }}
-                      style={{marginLeft:8, minWidth:120}}
-                    />
-                    <button
-                      disabled={krok.splneno || idx > pripad.aktualniKrok}
-                      onClick={() => splnitKrok(pripad.id, idx)}
-                    >
-                      {krok.splneno ? 'Splněno' : 'Označit jako splněné'}
-                    </button>
-                    {/* Zobrazit historii změn ke kroku */}
-                    {krok.historie && krok.historie.length > 0 && (
-                      <details style={{marginLeft:8}}>
-                        <summary>Historie změn</summary>
-                        <ul style={{fontSize:'0.9em',color:'#555'}}>
-                          {krok.historie.map((z, i) => (
-                            <li key={i}>{z.kdy} – {z.kdo}: {z.zmena}</li>
-                          ))}
-                        </ul>
-                      </details>
-                    )}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth size="small">
+                <InputLabel id="archiv-label">Archivace</InputLabel>
+                <Select labelId="archiv-label" value={zobrazArchivovane ? 'ano' : 'ne'} label="Archivace" onChange={e => setZobrazArchivovane(e.target.value === 'ano')}>
+                  <MenuItem value="ne">Skrýt archivované</MenuItem>
+                  <MenuItem value="ano">Zobrazit archivované</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box sx={{display:'flex',gap:1,flexWrap:'wrap',mb:2}}>
+              <Button variant="contained" color="primary" size="small" onClick={() => exportToCSV(pripady)}>Exportovat do CSV</Button>
+              <Button variant="outlined" color="primary" size="small" component="label">
+                Importovat z CSV
+                <input type="file" accept=".csv" hidden onChange={importFromCSV} />
+              </Button>
+              <Button variant="contained" color="secondary" size="small" onClick={() => exportToJSON(pripady)}>Exportovat do JSON</Button>
+              <Button variant="outlined" color="secondary" size="small" component="label">
+                Importovat z JSON
+                <input type="file" accept=".json" hidden onChange={importFromJSON} />
+              </Button>
+            </Box>
+          </Paper>
+          <Box sx={{flex:1}}>
+            <Box sx={{display:'flex',justifyContent:'flex-end',mb:2}}>
+              <TextField
+                size="small"
+                variant="outlined"
+                placeholder="Vyhledat klienta, banku, poznámku..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                sx={{minWidth: isMobile ? '100%' : 250}}
+              />
+            </Box>
+            <Grid container spacing={isMobile ? 2 : 3}>
+              {pripady.filter(p =>
+                (zobrazArchivovane ? true : !p.archivovano) &&
+                (aktivniPoradce ? p.poradce === aktivniPoradce : true) &&
+                (stavKrokuFilter === '' || KROKY[p.aktualniKrok + 3] === stavKrokuFilter) &&
+                (p.klient.toLowerCase().includes(search.toLowerCase()) ||
+                p.krok3.banka.toLowerCase().includes(search.toLowerCase()) ||
+                (p.poznamka && p.poznamka.toLowerCase().includes(search.toLowerCase()))
+                )
+              ).map(pripad => {
+                return (
+                  <Grid size={12} key={pripad.id}>
+                    <Card elevation={6} sx={{borderRadius:5,mb:2,background:darkMode?'rgba(30,34,44,0.92)':'rgba(255,255,255,0.97)',boxShadow:'0 4px 24px #1976d211'}}>
+                      <CardContent>
+                        <Box sx={{display:'flex',alignItems:'center',gap:2,mb:1,flexWrap:'wrap'}}>
+                          <Avatar sx={{bgcolor:'#1976d2',width:40,height:40,fontWeight:700}}>{pripad.poradce?.[0] || '?'}</Avatar>
+                          <Box sx={{flex:1}}>
+                            <Typography variant="h6" sx={{fontWeight:600}}>{pripad.klient}</Typography>
+                            <Typography variant="body2" color="text.secondary">Poradce: {pripad.poradce}</Typography>
+                          </Box>
+                          <IconButton color="primary" onClick={() => editovatPripad(pripad)}><EditIcon /></IconButton>
+                          <IconButton color="error" onClick={() => smazatPripad(pripad.id)}><DeleteIcon /></IconButton>
+                          {!pripad.archivovano ? (
+                            <IconButton color="default" onClick={() => archivovatPripad(pripad.id)}><ArchiveIcon /></IconButton>
+                          ) : (
+                            <IconButton color="primary" onClick={() => obnovitPripad(pripad.id)}><UnarchiveIcon /></IconButton>
+                          )}
+                        </Box>
+                        <Box sx={{my:2}}>
+                          <Typography variant="subtitle2" color="primary" sx={{mb:1}}>Workflow</Typography>
+                          <Stepper activeStep={pripad.aktualniKrok} orientation="vertical" sx={{background:'none'}}>
+                            {pripad.kroky.map((krok, idx) => (
+                              <Step key={idx} completed={krok.splneno}>
+                                <StepLabel optional={krok.termin ? <span style={{color:'#1976d2',fontWeight:500}}>{krok.termin}</span> : undefined}>
+                                  {krok.nazev}
+                                </StepLabel>
+                                <StepContent>
+                                  <MUITextField
+                                    size="small"
+                                    label="Poznámka ke kroku"
+                                    value={krok.poznamka || ''}
+                                    onChange={e => {
+                                      setPripady(pripady.map(p => {
+                                        if (p.id !== pripad.id) return p;
+                                        const noveKroky = [...p.kroky];
+                                        noveKroky[idx] = { ...noveKroky[idx], poznamka: e.target.value };
+                                        return { ...p, kroky: noveKroky };
+                                      }));
+                                    }}
+                                    sx={{mb:1,minWidth:220}}
+                                  />
+                                  <MUITextField
+                                    size="small"
+                                    type="date"
+                                    label="Termín"
+                                    value={krok.termin || ''}
+                                    onChange={e => nastavTermin(pripad.id, idx, e.target.value)}
+                                    sx={{mb:1,minWidth:140}}
+                                    InputLabelProps={{ shrink: true }}
+                                  />
+                                  <MUIButton
+                                    variant={krok.splneno ? 'contained' : 'outlined'}
+                                    color={krok.splneno ? 'success' : 'primary'}
+                                    size="small"
+                                    onClick={() => splnitKrok(pripad.id, idx)}
+                                    disabled={krok.splneno || idx > pripad.aktualniKrok}
+                                    sx={{ml:1}}
+                                  >
+                                    {krok.splneno ? 'Splněno' : 'Označit jako splněné'}
+                                  </MUIButton>
+                                </StepContent>
+                              </Step>
+                            ))}
+                          </Stepper>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Box>
+        </Box>
+      </Container>
+      {/* FAB pro mobilní přidání případu */}
+      {isMobile && (
+        <Fab color="primary" aria-label="Přidat případ" sx={{position:'fixed',bottom:80,right:24,zIndex:1200,boxShadow:'0 4px 24px #1976d244'}} onClick={()=>setOpenEditDialog(true)}>
+          <AddCircleIcon fontSize="large" />
+        </Fab>
+      )}
+      {/* BottomNavigation pro mobil */}
+      {isMobile && (
+        <BottomNavigation
+          value={bottomNav}
+          onChange={(_e, newValue) => setBottomNav(newValue)}
+          showLabels
+          sx={{position:'fixed',bottom:0,left:0,right:0,zIndex:1200,backdropFilter:'blur(8px)',background:darkMode?'rgba(30,34,44,0.97)':'rgba(255,255,255,0.97)',boxShadow:'0 -2px 16px #1976d211'}}
+        >
+          <BottomNavigationAction label="Případy" value="cases" icon={<ListAltIcon />} />
+          <BottomNavigationAction label="Přehled" value="dashboard" icon={<RestoreIcon />} />
+        </BottomNavigation>
+      )}
+      {/* Snackbar pro toast notifikace */}
+      <Snackbar open={snackbar.open} autoHideDuration={3500} onClose={()=>setSnackbar(s=>({...s,open:false}))} anchorOrigin={{vertical:'bottom',horizontal:'center'}}>
+        <MuiAlert elevation={6} variant="filled" onClose={()=>setSnackbar(s=>({...s,open:false}))} severity={snackbar.severity} sx={{fontWeight:500,letterSpacing:0.2}}>
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
+      {/* Dialog pro editaci případu */}
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} TransitionComponent={Transition} maxWidth="sm" fullWidth PaperProps={{sx:{backdropFilter:'blur(8px)',background:darkMode?'rgba(30,34,44,0.97)':'rgba(255,255,255,0.97)'}}}>
+        <DialogTitle>Upravit případ</DialogTitle>
+        <DialogContent sx={{display:'flex',flexDirection:'column',gap:2,py:2}}>
+          <TextField label="Klient" value={novyKlient} onChange={e=>setNovyKlient(e.target.value)} fullWidth size="small" />
+          <TextField label="Poradce" value={novyPoradce} onChange={e=>setNovyPoradce(e.target.value)} fullWidth size="small" />
+          <TextField label="Co financuje" value={krok1Co} onChange={e=>setKrok1Co(e.target.value)} fullWidth size="small" />
+          <TextField label="Částka" value={krok1Castka} onChange={e=>setKrok1Castka(e.target.value)} fullWidth size="small" />
+          <TextField label="Popis" value={krok1Popis} onChange={e=>setKrok1Popis(e.target.value)} fullWidth size="small" />
+          <TextField label="Datum návrhu" type="date" value={krok2Termin} onChange={e=>setKrok2Termin(e.target.value)} fullWidth size="small" InputLabelProps={{shrink:true}} />
+          <TextField label="Úrok (%)" value={krok2Urok} onChange={e=>setKrok2Urok(e.target.value)} fullWidth size="small" />
+          <Select value={krok3Banka} onChange={e=>setKrok3Banka(e.target.value)} fullWidth size="small" displayEmpty>
+            {BANKY.map(b=>(<MenuItem key={b} value={b}>{b}</MenuItem>))}
+          </Select>
+          {krok3Banka==='Další (ručně)' && (
+            <TextField label="Vlastní banka" value={krok3Vlastni} onChange={e => setKrok3Vlastni(e.target.value)} fullWidth size="small" />
+          )}
+          <TextField label="Poznámka" value={poznamka} onChange={e=>setPoznamka(e.target.value)} fullWidth size="small" multiline minRows={2} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={()=>setOpenEditDialog(false)} color="secondary">Zrušit</Button>
+          <Button onClick={()=>{ulozitEditaci();setOpenEditDialog(false);}} color="primary" variant="contained">Uložit změny</Button>
+        </DialogActions>
+      </Dialog>
+      {/* Dialog pro potvrzení smazání */}
+      <Dialog open={openDeleteDialog} onClose={()=>setOpenDeleteDialog(false)} TransitionComponent={Transition} maxWidth="xs" PaperProps={{sx:{backdropFilter:'blur(8px)',background:darkMode?'rgba(30,34,44,0.97)':'rgba(255,255,255,0.97)'}}}>
+        <DialogTitle>Opravdu smazat případ?</DialogTitle>
+        <DialogActions>
+          <Button onClick={()=>setOpenDeleteDialog(false)} color="secondary">Zrušit</Button>
+          <Button onClick={()=>{setOpenDeleteDialog(false);}} color="error" variant="contained">Smazat</Button>
+        </DialogActions>
+      </Dialog>
+    </ThemeProvider>
   );
 }
 
