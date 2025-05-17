@@ -24,7 +24,9 @@
     "noUncheckedSideEffectImports": true,
 
     /* Interop */
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": ["src"]
 }

@@ -7,9 +7,9 @@ describe('bliziciSeTerminy', () => {
       klient: 'Test',
       poradce: 'Poradce',
       aktualniKrok: 0,
-      krok1: {},
-      krok2: {},
-      krok3: {},
+      krok1: { co: '', castka: '' },
+      krok2: { termin: '', urok: '' },
+      krok3: { banka: '' },
       kroky: [],
     };
     expect(bliziciSeTerminy(pripad)).toEqual([]);
@@ -24,9 +24,9 @@ describe('bliziciSeTerminy', () => {
       klient: 'Test',
       poradce: 'Poradce',
       aktualniKrok: 0,
-      krok1: {},
-      krok2: { termin: zaTriDny.toISOString().slice(0,10) },
-      krok3: {},
+      krok1: { co: '', castka: '' },
+      krok2: { termin: zaTriDny.toISOString().slice(0,10), urok: '' },
+      krok3: { banka: '' },
       kroky: [],
     };
     expect(bliziciSeTerminy(pripad)).toContain(`Návrh financování: ${zaTriDny.toISOString().slice(0,10)}`);
@@ -41,9 +41,9 @@ describe('bliziciSeTerminy', () => {
       klient: 'Test',
       poradce: 'Poradce',
       aktualniKrok: 0,
-      krok1: {},
-      krok2: {},
-      krok3: {},
+      krok1: { co: '', castka: '' },
+      krok2: { termin: '', urok: '' },
+      krok3: { banka: '' },
       kroky: [
         { nazev: 'Krok A', termin: zaPetDni.toISOString().slice(0,10), splneno: false },
         { nazev: 'Krok B', termin: zaPetDni.toISOString().slice(0,10), splneno: true },

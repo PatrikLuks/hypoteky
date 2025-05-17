@@ -4,8 +4,10 @@ import type { EditDialogProps } from './types';
 import type { Attachment } from './types';
 import { undoPripad, redoPripad } from './utils';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import { useTranslation } from 'react-i18next';
 
 const EditDialog: React.FC<EditDialogProps> = ({ open, onClose, onSave, pripad, banky, themeMode }) => {
+  const { t } = useTranslation();
   const [klient, setKlient] = useState(pripad?.klient || '');
   const [poradce, setPoradce] = useState(pripad?.poradce || '');
   const [co, setCo] = useState(pripad?.krok1?.co || '');
@@ -29,13 +31,13 @@ const EditDialog: React.FC<EditDialogProps> = ({ open, onClose, onSave, pripad, 
 
   const validate = () => {
     const newErrors: typeof errors = {
-      klient: klient.trim() ? '' : 'Zadejte jméno klienta',
-      poradce: poradce.trim() ? '' : 'Zadejte jméno poradce',
-      co: co.trim() ? '' : 'Zadejte, co klient financuje',
-      castka: !castka.trim() ? 'Zadejte částku' : isNaN(Number(castka)) || Number(castka) <= 0 ? 'Zadejte platnou částku' : '',
-      termin: termin ? '' : 'Zadejte termín',
-      urok: !urok.trim() ? 'Zadejte úrok' : isNaN(Number(urok)) || Number(urok) <= 0 ? 'Zadejte platný úrok' : '',
-      banka: banka ? '' : 'Vyberte banku',
+      klient: klient.trim() ? '' : t('validation.client'),
+      poradce: poradce.trim() ? '' : t('validation.advisor'),
+      co: co.trim() ? '' : t('validation.what'),
+      castka: !castka.trim() ? t('validation.amount') : isNaN(Number(castka)) || Number(castka) <= 0 ? t('validation.amount.valid') : '',
+      termin: termin ? '' : t('validation.deadline'),
+      urok: !urok.trim() ? t('validation.interest') : isNaN(Number(urok)) || Number(urok) <= 0 ? t('validation.interest.valid') : '',
+      banka: banka ? '' : t('validation.bank'),
     };
     setErrors(newErrors);
     return Object.values(newErrors).every(e => !e);
@@ -94,31 +96,31 @@ const EditDialog: React.FC<EditDialogProps> = ({ open, onClose, onSave, pripad, 
         },
       }}
     >
-      <DialogTitle>Upravit případ</DialogTitle>
+      <DialogTitle>{t('edit.case')}</DialogTitle>
       <DialogContent>
-        <TextField label="Klient" value={klient} onChange={e => setKlient(e.target.value)} fullWidth margin="normal" error={!!errors.klient} helperText={errors.klient} />
-        <TextField label="Poradce" value={poradce} onChange={e => setPoradce(e.target.value)} fullWidth margin="normal" error={!!errors.poradce} helperText={errors.poradce} />
-        <TextField label="Co financuje" value={co} onChange={e => setCo(e.target.value)} fullWidth margin="normal" error={!!errors.co} helperText={errors.co} />
-        <TextField label="Částka" value={castka} onChange={e => setCastka(e.target.value)} fullWidth margin="normal" type="number" error={!!errors.castka} helperText={errors.castka} />
-        <TextField label="Popis" value={popis} onChange={e => setPopis(e.target.value)} fullWidth margin="normal" />
-        <TextField label="Termín" value={termin} onChange={e => setTermin(e.target.value)} fullWidth margin="normal" type="date" InputLabelProps={{ shrink: true }} error={!!errors.termin} helperText={errors.termin} />
-        <TextField label="Úrok" value={urok} onChange={e => setUrok(e.target.value)} fullWidth margin="normal" type="number" error={!!errors.urok} helperText={errors.urok} />
+        <TextField label={t('client')} value={klient} onChange={e => setKlient(e.target.value)} fullWidth margin="normal" error={!!errors.klient} helperText={errors.klient} />
+        <TextField label={t('advisor')} value={poradce} onChange={e => setPoradce(e.target.value)} fullWidth margin="normal" error={!!errors.poradce} helperText={errors.poradce} />
+        <TextField label={t('what')} value={co} onChange={e => setCo(e.target.value)} fullWidth margin="normal" error={!!errors.co} helperText={errors.co} />
+        <TextField label={t('amount')} value={castka} onChange={e => setCastka(e.target.value)} fullWidth margin="normal" type="number" error={!!errors.castka} helperText={errors.castka} />
+        <TextField label={t('description')} value={popis} onChange={e => setPopis(e.target.value)} fullWidth margin="normal" />
+        <TextField label={t('deadline')} value={termin} onChange={e => setTermin(e.target.value)} fullWidth margin="normal" type="date" InputLabelProps={{ shrink: true }} error={!!errors.termin} helperText={errors.termin} />
+        <TextField label={t('interest')} value={urok} onChange={e => setUrok(e.target.value)} fullWidth margin="normal" type="number" error={!!errors.urok} helperText={errors.urok} />
         <Select value={banka} onChange={e => setBanka(e.target.value as string)} fullWidth displayEmpty sx={{ mt: 2 }} error={!!errors.banka}>
-          <MenuItem value="" disabled>Vyberte banku</MenuItem>
+          <MenuItem value="" disabled>{t('validation.bank.select')}</MenuItem>
           {banky.map(b => <MenuItem key={b} value={b}>{b}</MenuItem>)}
         </Select>
         {banka === 'Další (ručně)' && (
-          <TextField label="Vlastní banka" value={vlastniBanka} onChange={e => setVlastniBanka(e.target.value)} fullWidth margin="normal" />
+          <TextField label={t('custom.bank')} value={vlastniBanka} onChange={e => setVlastniBanka(e.target.value)} fullWidth margin="normal" />
         )}
-        <TextField label="Poznámka" value={poznamka} onChange={e => setPoznamka(e.target.value)} fullWidth margin="normal" multiline minRows={2} />
+        <TextField label={t('note')} value={poznamka} onChange={e => setPoznamka(e.target.value)} fullWidth margin="normal" multiline minRows={2} />
         <Box sx={{mt:2}}>
-          <Typography variant="subtitle1" sx={{fontWeight:600,mb:1}}>Přílohy</Typography>
+          <Typography variant="subtitle1" sx={{fontWeight:600,mb:1}}>{t('attachments')}</Typography>
           <Box
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             sx={{border:'2px dashed #aaa',borderRadius:2,p:2,mb:2,textAlign:'center',background:'#fafbfc',cursor:'pointer'}}
           >
-            Přetáhněte soubory sem nebo <input type="file" multiple onChange={handleFileChange} style={{display:'inline'}} />
+            {t('attachments.drop')} <input type="file" multiple onChange={handleFileChange} style={{display:'inline'}} />
           </Box>
           <Box sx={{display:'flex',flexWrap:'wrap',gap:2}}>
             {attachments.map(att => (
@@ -135,8 +137,8 @@ const EditDialog: React.FC<EditDialogProps> = ({ open, onClose, onSave, pripad, 
                 )}
                 <Typography variant="caption" sx={{wordBreak:'break-all',mb:1}}>{att.name}</Typography>
                 <Box sx={{display:'flex',gap:1}}>
-                  <Button size="small" onClick={()=>window.open(att.url, '_blank')}>Stáhnout</Button>
-                  <Button size="small" color="error" onClick={()=>setAttachments(prev=>prev.filter(a=>a.id!==att.id))}>Smazat</Button>
+                  <Button size="small" onClick={()=>window.open(att.url, '_blank')}>{t('attachments.download')}</Button>
+                  <Button size="small" color="error" onClick={()=>setAttachments(prev=>prev.filter(a=>a.id!==att.id))}>{t('attachments.delete')}</Button>
                 </Box>
               </Box>
             ))}
@@ -144,22 +146,48 @@ const EditDialog: React.FC<EditDialogProps> = ({ open, onClose, onSave, pripad, 
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="secondary">Zrušit</Button>
-        <Button onClick={handleSave} color="primary" variant="contained">Uložit</Button>
+        <Button onClick={onClose} color="secondary">{t('cancel')}</Button>
+        <Button onClick={handleSave} color="primary" variant="contained">{t('save')}</Button>
       </DialogActions>
       <Box sx={{display:'flex',gap:1,mt:2,justifyContent:'flex-end'}}>
         <Button size="small" variant="outlined" onClick={() => {
           if (pripad) {
             const prev = undoPripad(pripad);
-            if (prev) onSave(prev);
+            if (prev) {
+              onSave({
+                klient: prev.klient,
+                poradce: prev.poradce,
+                co: prev.krok1?.co || '',
+                castka: prev.krok1?.castka || '',
+                popis: prev.krok1?.popis || '',
+                termin: prev.krok2?.termin || '',
+                urok: prev.krok2?.urok || '',
+                banka: prev.krok3?.banka || '',
+                poznamka: prev.poznamka || '',
+                attachments: prev.kroky?.[0]?.attachments || []
+              });
+            }
           }
-        }}>Undo</Button>
+        }}>{t('undo')}</Button>
         <Button size="small" variant="outlined" onClick={() => {
           if (pripad) {
             const next = redoPripad(pripad);
-            if (next) onSave(next);
+            if (next) {
+              onSave({
+                klient: next.klient,
+                poradce: next.poradce,
+                co: next.krok1?.co || '',
+                castka: next.krok1?.castka || '',
+                popis: next.krok1?.popis || '',
+                termin: next.krok2?.termin || '',
+                urok: next.krok2?.urok || '',
+                banka: next.krok3?.banka || '',
+                poznamka: next.poznamka || '',
+                attachments: next.kroky?.[0]?.attachments || []
+              });
+            }
           }
-        }}>Redo</Button>
+        }}>{t('redo')}</Button>
       </Box>
     </Dialog>
   );

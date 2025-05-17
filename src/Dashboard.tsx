@@ -3,6 +3,7 @@ import { Paper, Typography, Box, FormControl, InputLabel, Select, MenuItem, Swit
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LabelList } from 'recharts';
 import { v4 as uuidv4 } from 'uuid';
 import type { DashboardProps, SavedFilter } from './types';
+import { useTranslation } from 'react-i18next';
 
 const FILTERS_KEY = 'dashboardSavedFilters';
 
@@ -18,6 +19,8 @@ function saveSavedFilters(filters: SavedFilter[]) {
 const Dashboard: React.FC<DashboardProps> = React.memo(({
   pripady, KROKY, poradci, aktivniPoradce, setAktivniPoradce, stavKrokuFilter, setStavKrokuFilter, zobrazArchivovane, setZobrazArchivovane, dashboardPrefs, setDashboardPrefs, isMobile, search, setSearch, bankaFilter, setBankaFilter, terminFilter, setTerminFilter
 }) => {
+  const { t } = useTranslation();
+
   // Výpočty statistik a grafů
   const dokoncene = useMemo(() => pripady.filter(p => !p.archivovano && p.kroky.every(k => k.splneno)).length, [pripady]);
   const pipelineData = useMemo(() => KROKY.slice(3).map((k, idx) => ({
@@ -70,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({
       {/* Graf pipeline nahoru */}
       {dashboardPrefs.showPipeline && (
         <Box sx={{mb:2}}>
-          <Typography variant="subtitle1" sx={{fontWeight:600,mb:1}}>Pipeline (počet případů v jednotlivých fázích)</Typography>
+          <Typography variant="subtitle1" sx={{fontWeight:600,mb:1}}>{t('pipeline.graph')}</Typography>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={pipelineData} layout="vertical" margin={{left:20}}>
               <XAxis type="number" allowDecimals={false}/>
@@ -83,47 +86,47 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({
           </ResponsiveContainer>
         </Box>
       )}
-      <Typography variant="h6" sx={{fontWeight:600,mb:2}}>Přehled</Typography>
+      <Typography variant="h6" sx={{fontWeight:600,mb:2}}>{t('overview')}</Typography>
       <Box component="ul" sx={{pl:2,mb:2}}>
-        <li>Počet rozpracovaných případů: <b>{pripady.filter(p => !p.archivovano).length}</b></li>
-        <li>Počet dokončených případů: <b>{dokoncene}</b></li>
-        <li>Počet archivovaných případů: <b>{pripady.filter(p => p.archivovano).length}</b></li>
+        <li>{t('cases.active')}: <b>{pripady.filter(p => !p.archivovano).length}</b></li>
+        <li>{t('cases.completed')}: <b>{dokoncene}</b></li>
+        <li>{t('cases.archived')}: <b>{pripady.filter(p => p.archivovano).length}</b></li>
       </Box>
       <Box sx={{display:'flex',flexDirection:'column',gap:2,mb:2}}>
         <FormControl fullWidth size="small">
-          <InputLabel id="aktivni-poradce-label">Aktivní poradce</InputLabel>
-          <Select labelId="aktivni-poradce-label" value={aktivniPoradce} label="Aktivní poradce" onChange={e => setAktivniPoradce(e.target.value)}>
-            <MenuItem value="">Všichni poradci</MenuItem>
+          <InputLabel id="aktivni-poradce-label">{t('filter.advisor')}</InputLabel>
+          <Select labelId="aktivni-poradce-label" value={aktivniPoradce} label={t('filter.advisor')} onChange={e => setAktivniPoradce(e.target.value)}>
+            <MenuItem value="">{t('filter.all.advisors')}</MenuItem>
             {poradci.map(jmeno => (
               <MenuItem key={jmeno} value={jmeno}>{jmeno}</MenuItem>
             ))}
           </Select>
         </FormControl>
         <FormControl fullWidth size="small">
-          <InputLabel id="stav-kroku-label">Filtrovat podle stavu kroku</InputLabel>
-          <Select labelId="stav-kroku-label" value={stavKrokuFilter} label="Filtrovat podle stavu kroku" onChange={e => setStavKrokuFilter(e.target.value)}>
-            <MenuItem value="">Všechny stavy</MenuItem>
+          <InputLabel id="stav-kroku-label">{t('filter.step')}</InputLabel>
+          <Select labelId="stav-kroku-label" value={stavKrokuFilter} label={t('filter.step')} onChange={e => setStavKrokuFilter(e.target.value)}>
+            <MenuItem value="">{t('filter.all.steps')}</MenuItem>
             {KROKY.slice(3).map((k, idx) => (
               <MenuItem key={idx} value={k}>{k}</MenuItem>
             ))}
           </Select>
         </FormControl>
         <FormControl fullWidth size="small">
-          <InputLabel id="archiv-label">Archivace</InputLabel>
-          <Select labelId="archiv-label" value={zobrazArchivovane ? 'ano' : 'ne'} label="Archivace" onChange={e => setZobrazArchivovane(e.target.value === 'ano')}>
-            <MenuItem value="ne">Skrýt archivované</MenuItem>
-            <MenuItem value="ano">Zobrazit archivované</MenuItem>
+          <InputLabel id="archiv-label">{t('filter.archive')}</InputLabel>
+          <Select labelId="archiv-label" value={zobrazArchivovane ? 'ano' : 'ne'} label={t('filter.archive')} onChange={e => setZobrazArchivovane(e.target.value === 'ano')}>
+            <MenuItem value="ne">{t('filter.hide.archived')}</MenuItem>
+            <MenuItem value="ano">{t('filter.show.archived')}</MenuItem>
           </Select>
         </FormControl>
         <FormControl fullWidth size="small">
-          <InputLabel id="banka-filter-label">Banka</InputLabel>
-          <Select labelId="banka-filter-label" value={bankaFilter} label="Banka" onChange={e => setBankaFilter(e.target.value)}>
-            <MenuItem value="">Všechny banky</MenuItem>
+          <InputLabel id="banka-filter-label">{t('filter.bank')}</InputLabel>
+          <Select labelId="banka-filter-label" value={bankaFilter} label={t('filter.bank')} onChange={e => setBankaFilter(e.target.value)}>
+            <MenuItem value="">{t('filter.all.banks')}</MenuItem>
             {banky.map(b => <MenuItem key={b} value={b}>{b}</MenuItem>)}
           </Select>
         </FormControl>
         <TextField
-          label="Termín návrhu (YYYY-MM-DD)"
+          label={t('filter.deadline')}
           type="date"
           value={terminFilter}
           onChange={e => setTerminFilter(e.target.value)}
@@ -131,26 +134,26 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({
           size="small"
         />
         <FormGroup row sx={{mb:2,gap:2}}>
-          <FormControlLabel control={<Switch checked={dashboardPrefs.showSuccess} onChange={e=>setDashboardPrefs((p)=>({...p,showSuccess:e.target.checked}))} />} label="Úspěšnost" />
-          <FormControlLabel control={<Switch checked={dashboardPrefs.showPipeline} onChange={e=>setDashboardPrefs((p)=>({...p,showPipeline:e.target.checked}))} />} label="Pipeline" />
+          <FormControlLabel control={<Switch checked={dashboardPrefs.showSuccess} onChange={e=>setDashboardPrefs((p)=>({...p,showSuccess:e.target.checked}))} />} label={t('success')} />
+          <FormControlLabel control={<Switch checked={dashboardPrefs.showPipeline} onChange={e=>setDashboardPrefs((p)=>({...p,showPipeline:e.target.checked}))} />} label={t('pipeline')} />
         </FormGroup>
         <Box sx={{mb:2}}>
-          <input type="text" placeholder="Vyhledat klienta, banku, poznámku..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:'100%',padding:'8px',borderRadius:4,border:'1px solid #ccc'}} />
+          <input type="text" placeholder={t('search.placeholder')} value={search} onChange={e=>setSearch(e.target.value)} style={{width:'100%',padding:'8px',borderRadius:4,border:'1px solid #ccc'}} />
         </Box>
         <Box sx={{display:'flex',flexDirection:'column',gap:2,mb:2}}>
           <Box sx={{display:'flex',gap:1,alignItems:'center',mb:1}}>
-            <TextField size="small" label="Název filtru" value={filterName} onChange={e=>setFilterName(e.target.value)} sx={{flex:1}} />
-            <Button variant="outlined" size="small" onClick={handleSaveFilter}>Uložit filtr</Button>
+            <TextField size="small" label={t('filter.name')} value={filterName} onChange={e=>setFilterName(e.target.value)} sx={{flex:1}} />
+            <Button variant="outlined" size="small" onClick={handleSaveFilter}>{t('filter.save')}</Button>
           </Box>
           {savedFilters.length > 0 && (
             <Box sx={{mb:1}}>
-              <Typography variant="caption" color="text.secondary">Uložené filtry:</Typography>
+              <Typography variant="caption" color="text.secondary">{t('filter.saved')}:</Typography>
               <Box sx={{display:'flex',flexWrap:'wrap',gap:1,mt:0.5}}>
                 {savedFilters.map(f => (
                   <Box key={f.id} sx={{display:'flex',alignItems:'center',border:'1px solid #eee',borderRadius:2,px:1,py:0.5,bgcolor:'#fafbfc'}}>
                     <Button size="small" onClick={()=>handleLoadFilter(f)}>{f.name}</Button>
                     <Button size="small" color="error" onClick={()=>handleDeleteFilter(f.id)} sx={{minWidth:0,ml:0.5}}>✕</Button>
-                    <Button size="small" onClick={()=>handleShareFilter(f)} sx={{minWidth:0,ml:0.5}}>Sdílet</Button>
+                    <Button size="small" onClick={()=>handleShareFilter(f)} sx={{minWidth:0,ml:0.5}}>{t('filter.share')}</Button>
                   </Box>
                 ))}
               </Box>

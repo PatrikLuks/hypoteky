@@ -408,18 +408,14 @@ function App() {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
       const imported = rows.map((r: Record<string, unknown>) => {
-        const pripad = { ...r } as PripadHypoteky;
-        if (typeof pripad.attachments === 'string') {
-          // Rozparsovat přílohy zpět do pole
-          pripad.kroky = pripad.kroky || [];
-          const atts = (pripad.attachments as string).split(';').filter(Boolean).map((a: string) => {
+        const pripad = r as unknown as PripadHypoteky;
+        // Pokud jsou přílohy ve stringu, rozparsuj je do kroku 0
+        if (pripad.kroky && pripad.kroky[0] && typeof pripad.kroky[0].attachments === 'string') {
+          const atts = (pripad.kroky[0].attachments as unknown as string).split(';').filter(Boolean).map((a: string) => {
             const [name, url] = a.split('|');
             return { id: Math.random().toString(36).slice(2), name, url, type: '' };
           });
-          if (atts.length) {
-            if (!pripad.kroky[0]) pripad.kroky[0] = {} as any;
-            pripad.kroky[0].attachments = atts;
-          }
+          pripad.kroky[0].attachments = atts;
         }
         return pripad;
       });
