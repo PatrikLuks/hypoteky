@@ -131,6 +131,24 @@
   }
 }
 @media (max-width: 700px) {
+  button, .MuiButton-root, .MuiFab-root {
+    min-height: 48px !important;
+    font-size: 1.1em !important;
+    padding: 0.7em 1.2em !important;
+    border-radius: 10px !important;
+  }
+  .MuiBottomNavigation-root, .MuiBottomNavigationAction-root {
+    min-height: 60px !important;
+    font-size: 1.1em !important;
+  }
+  .MuiFab-root {
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 1.5em !important;
+  }
+  .MuiInputBase-root, .MuiTextField-root {
+    font-size: 1.1em !important;
+  }
   .dashboard {
     padding: 1rem 0.5rem;
   }

@@ -11,14 +11,27 @@ export interface KrokPripadu {
   attachments?: Attachment[];
 }
 
+export interface Krok1Data {
+  co: string;
+  castka: string;
+  popis?: string;
+}
+export interface Krok2Data {
+  termin: string;
+  urok: string;
+}
+export interface Krok3Data {
+  banka: string;
+}
+
 export interface PripadHypoteky {
   id: number;
   klient: string;
   poradce: string;
   aktualniKrok: number;
-  krok1: any;
-  krok2: any;
-  krok3: any;
+  krok1: Krok1Data;
+  krok2: Krok2Data;
+  krok3: Krok3Data;
   kroky: KrokPripadu[];
   poznamka?: string;
   archivovano?: boolean;
@@ -28,6 +41,8 @@ export interface KrokZmena {
   kdo: string;
   kdy: string;
   zmena: string;
+  predchozi?: KrokPripadu;
+  nove?: KrokPripadu;
 }
 
 export interface Attachment {
@@ -47,11 +62,20 @@ export interface DashboardProps {
   setStavKrokuFilter: (v: string) => void;
   zobrazArchivovane: boolean;
   setZobrazArchivovane: (v: boolean) => void;
-  dashboardPrefs: any;
-  setDashboardPrefs: (v: any) => void;
+  dashboardPrefs: {
+    showSuccess: boolean;
+    showPipeline: boolean;
+    showAvgTime?: boolean;
+    showHeatmap?: boolean;
+  };
+  setDashboardPrefs: (v: DashboardProps['dashboardPrefs']|((prev: DashboardProps['dashboardPrefs'])=>DashboardProps['dashboardPrefs'])) => void;
   isMobile: boolean;
   search: string;
   setSearch: (v: string) => void;
+  bankaFilter: string;
+  setBankaFilter: (v: string) => void;
+  terminFilter: string;
+  setTerminFilter: (v: string) => void;
 }
 
 export interface PripadCardProps {
@@ -66,7 +90,7 @@ export interface PripadCardProps {
 export interface EditDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: Krok1Data & Krok2Data & Krok3Data & { klient: string; poradce: string; poznamka: string; attachments: Attachment[] }) => void;
   pripad?: PripadHypoteky;
   banky: string[];
   themeMode: string;
@@ -91,4 +115,53 @@ export interface DeleteDialogProps {
   onClose: () => void;
   onDelete: () => void;
   themeMode: string;
+}
+
+export type UserRole = 'poradce' | 'manazer' | 'admin';
+
+export interface User {
+  id: string;
+  name: string;
+  role: UserRole;
+  email: string;
+}
+
+export interface DemoUser {
+  username: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface UndoRedoEntry {
+  pripadId: number;
+  prev: PripadHypoteky;
+  next: PripadHypoteky;
+  kdy: string;
+  kdo: string;
+  popis: string;
+}
+
+export interface SavedFilter {
+  id: string;
+  name: string;
+  data: {
+    aktivniPoradce: string;
+    stavKrokuFilter: string;
+    zobrazArchivovane: boolean;
+    bankaFilter: string;
+    terminFilter: string;
+    search: string;
+  };
+  createdAt: string;
+}
+
+export interface DashboardReport {
+  date: string;
+  stats: {
+    total: number;
+    completed: number;
+    archived: number;
+    byAdvisor: Record<string, number>;
+    byBank: Record<string, number>;
+  };
 }
