@@ -17,7 +17,7 @@ function saveSavedFilters(filters: SavedFilter[]) {
 }
 
 const Dashboard: React.FC<DashboardProps> = React.memo(({
-  pripady, KROKY, poradci, aktivniPoradce, setAktivniPoradce, stavKrokuFilter, setStavKrokuFilter, zobrazArchivovane, setZobrazArchivovane, dashboardPrefs, setDashboardPrefs, isMobile, search, setSearch, bankaFilter, setBankaFilter, terminFilter, setTerminFilter
+  pripady, KROKY, poradci, poradce, setPoradce, stavKrokuFilter, setStavKrokuFilter, zobrazArchivovane, setZobrazArchivovane, dashboardPrefs, setDashboardPrefs, isMobile, search, setSearch, bankaFilter, setBankaFilter, terminFilter, setTerminFilter
 }) => {
   const { t } = useTranslation();
 
@@ -39,7 +39,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({
     const newFilter: SavedFilter = {
       id: uuidv4(),
       name: filterName.trim(),
-      data: { aktivniPoradce, stavKrokuFilter, zobrazArchivovane, bankaFilter, terminFilter, search },
+      data: { poradce, stavKrokuFilter, zobrazArchivovane, bankaFilter, terminFilter, search },
       createdAt: new Date().toISOString()
     };
     const updated = [...savedFilters, newFilter];
@@ -49,7 +49,7 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({
   };
   // Načíst filtr
   const handleLoadFilter = (f: SavedFilter) => {
-    setAktivniPoradce(f.data.aktivniPoradce);
+    setPoradce(f.data.poradce);
     setStavKrokuFilter(f.data.stavKrokuFilter);
     setZobrazArchivovane(f.data.zobrazArchivovane);
     setBankaFilter(f.data.bankaFilter);
@@ -94,8 +94,8 @@ const Dashboard: React.FC<DashboardProps> = React.memo(({
       </Box>
       <Box sx={{display:'flex',flexDirection:'column',gap:2,mb:2}}>
         <FormControl fullWidth size="small">
-          <InputLabel id="aktivni-poradce-label">{t('filter.advisor')}</InputLabel>
-          <Select labelId="aktivni-poradce-label" value={aktivniPoradce} label={t('filter.advisor')} onChange={e => setAktivniPoradce(e.target.value)}>
+          <InputLabel id="poradce-label">{t('filter.advisor')}</InputLabel>
+          <Select labelId="poradce-label" value={poradce} label={t('filter.advisor')} onChange={e => setPoradce(e.target.value)}>
             <MenuItem value="">{t('filter.all.advisors')}</MenuItem>
             {poradci.map(jmeno => (
               <MenuItem key={jmeno} value={jmeno}>{jmeno}</MenuItem>

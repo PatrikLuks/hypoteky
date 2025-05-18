@@ -63,6 +63,14 @@ Testy pokrývají validace, dialogy, logiku utilit a chování UI. Všechny test
 ## Odstranění duplicitní Jest konfigurace
 V projektu je pouze jeden konfigurační soubor: `jest.config.cjs`.
 
+## Upgrade MUI na v7
+
+- 17. 5. 2025: Proveden upgrade všech balíčků MUI (`@mui/material`, `@mui/icons-material`, `@mui/system`) na verzi 7.
+- Otestována kompatibilita s projektem, všechny testy procházejí.
+- Testy byly upraveny pro správnou práci s i18n a novou verzí MUI.
+- V případě problémů s kompatibilitou viz [MUI v7 migration guide](https://mui.com/material-ui/migration/migration-v7/).
+- Audit závislostí: jedna high vulnerability v `xlsx` (bez dostupné opravy, viz audit výše).
+
 ---
 
 Projekt je připraven pro další rozšiřování dle potřeb finančních poradců. Přispívejte podle výše uvedených zásad.

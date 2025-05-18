@@ -56,8 +56,8 @@ export interface DashboardProps {
   pripady: PripadHypoteky[];
   KROKY: string[];
   poradci: string[];
-  aktivniPoradce: string;
-  setAktivniPoradce: (v: string) => void;
+  poradce: string;
+  setPoradce: (v: string) => void;
   stavKrokuFilter: string;
   setStavKrokuFilter: (v: string) => void;
   zobrazArchivovane: boolean;
@@ -145,7 +145,7 @@ export interface SavedFilter {
   id: string;
   name: string;
   data: {
-    aktivniPoradce: string;
+    poradce: string;
     stavKrokuFilter: string;
     zobrazArchivovane: boolean;
     bankaFilter: string;

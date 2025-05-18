@@ -19,8 +19,8 @@ describe('Dashboard', () => {
           pripady={[]}
           KROKY={['Krok1','Krok2','Krok3','Krok4']}
           poradci={['Poradce1']}
-          aktivniPoradce=""
-          setAktivniPoradce={()=>{}}
+          poradce=""
+          setPoradce={()=>{}}
           stavKrokuFilter=""
           setStavKrokuFilter={()=>{}}
           zobrazArchivovane={false}

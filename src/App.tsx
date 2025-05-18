@@ -19,8 +19,9 @@ import Dashboard from './Dashboard';
 import type { PripadHypoteky, KrokPripadu, DemoUser } from './types';
 import { bliziciSeTerminy, registerDemoUser, loginDemoUser, logoutDemoUser, getCurrentDemoUser, addUndoEntry } from './utils';
 import { saveAs } from 'file-saver';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { useTranslation } from 'react-i18next';
+import PripadCard from './PripadCard';
 
 // Přechod pro dialog (slide up)
 const Transition = React.forwardRef<HTMLDivElement, TransitionProps & { children: React.ReactElement }>(
@@ -127,7 +128,128 @@ const WorkflowDialog = lazy(() => import('./WorkflowDialog'));
 
 function App() {
   const { t, i18n } = useTranslation();
-  const [pripady, setPripady] = useState<PripadHypoteky[]>([]);
+  const [pripady, setPripady] = useState<PripadHypoteky[]>(() => [
+    {
+      id: 1,
+      klient: 'Alena Novotná',
+      poradce: 'Jana Veselá',
+      aktualniKrok: 0,
+      krok1: { co: 'Byt', castka: '3500000', popis: 'Praha 4, novostavba' },
+      krok2: { termin: '2025-05-20', urok: '4.19' },
+      krok3: { banka: 'Česká spořitelna' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: 'První hypotéka.',
+      archivovano: false
+    },
+    {
+      id: 2,
+      klient: 'Petr Malý',
+      poradce: 'Jana Veselá',
+      aktualniKrok: 1,
+      krok1: { co: 'Dům', castka: '7800000', popis: 'Rodinný dům, Brno' },
+      krok2: { termin: '2025-05-22', urok: '3.89' },
+      krok3: { banka: 'Komerční banka' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: '',
+      archivovano: false
+    },
+    {
+      id: 3,
+      klient: 'Lucie Černá',
+      poradce: 'Petr Novák',
+      aktualniKrok: 2,
+      krok1: { co: 'Rekonstrukce', castka: '1200000', popis: 'Rekonstrukce bytu, Plzeň' },
+      krok2: { termin: '2025-05-25', urok: '4.05' },
+      krok3: { banka: 'ČSOB' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: 'Rekonstrukce pro mladý pár.',
+      archivovano: false
+    },
+    {
+      id: 4,
+      klient: 'Tomáš Dvořák',
+      poradce: 'Petr Novák',
+      aktualniKrok: 0,
+      krok1: { co: 'Pozemek', castka: '2500000', popis: 'Stavební pozemek, Ostrava' },
+      krok2: { termin: '2025-05-28', urok: '4.50' },
+      krok3: { banka: 'Raiffeisenbank' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: '',
+      archivovano: false
+    },
+    {
+      id: 5,
+      klient: 'Eva Králová',
+      poradce: 'Jana Veselá',
+      aktualniKrok: 1,
+      krok1: { co: 'Chata', castka: '1800000', popis: 'Rekreační objekt, Liberec' },
+      krok2: { termin: '2025-05-30', urok: '3.75' },
+      krok3: { banka: 'Moneta Money Bank' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: 'Letní rekreace.',
+      archivovano: false
+    },
+    {
+      id: 6,
+      klient: 'Martin Sýkora',
+      poradce: 'Lucie Horáková',
+      aktualniKrok: 2,
+      krok1: { co: 'Družstevní byt', castka: '2900000', popis: 'Ostrava, centrum' },
+      krok2: { termin: '2025-06-02', urok: '3.99' },
+      krok3: { banka: 'UniCredit Bank' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: 'Převod družstevního podílu.',
+      archivovano: false
+    },
+    {
+      id: 7,
+      klient: 'Barbora Hrdličková',
+      poradce: 'Lucie Horáková',
+      aktualniKrok: 0,
+      krok1: { co: 'Komerční nemovitost', castka: '9500000', popis: 'Prodejna, Praha 10' },
+      krok2: { termin: '2025-06-10', urok: '4.25' },
+      krok3: { banka: 'Fio banka' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: 'Podnikatelský záměr.',
+      archivovano: false
+    },
+    {
+      id: 8,
+      klient: 'Jan Konečný',
+      poradce: 'Pavel Doležal',
+      aktualniKrok: 1,
+      krok1: { co: 'Rodinný dům', castka: '6200000', popis: 'Novostavba, Plzeň' },
+      krok2: { termin: '2025-06-15', urok: '3.85' },
+      krok3: { banka: 'Air Bank' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: '',
+      archivovano: false
+    },
+    {
+      id: 9,
+      klient: 'Simona Urbanová',
+      poradce: 'Pavel Doležal',
+      aktualniKrok: 2,
+      krok1: { co: 'Byt', castka: '4100000', popis: 'Brno, centrum' },
+      krok2: { termin: '2025-06-20', urok: '4.10' },
+      krok3: { banka: 'mBank' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: 'Investiční záměr.',
+      archivovano: false
+    },
+    {
+      id: 10,
+      klient: 'Radek Beneš',
+      poradce: 'Jana Veselá',
+      aktualniKrok: 0,
+      krok1: { co: 'Chalupa', castka: '2300000', popis: 'Jizerské hory' },
+      krok2: { termin: '2025-06-25', urok: '4.00' },
+      krok3: { banka: 'Raiffeisenbank' },
+      kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
+      poznamka: 'Rekreační objekt v horách.',
+      archivovano: false
+    }
+  ]);
   const [novyKlient, setNovyKlient] = useState('');
   const [novyPoradce, setNovyPoradce] = useState('');
   const [poznamka, setPoznamka] = useState('');
@@ -143,7 +265,7 @@ function App() {
   const [zvukAbsolvovany, setZvukAbsolvovany] = useState(false);
   const [stavKrokuFilter, setStavKrokuFilter] = useState('');
   const [zobrazArchivovane, setZobrazArchivovane] = useState(false);
-  const [aktivniPoradce, setAktivniPoradce] = useState('');
+  const [poradce, setPoradce] = useState('');
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [snackbar, setSnackbar] = useState<{open: boolean, message: string, severity?: AlertColor}>({open: false, message: ''});
   const [bottomNav, setBottomNav] = useState('cases');
@@ -250,72 +372,6 @@ function App() {
   // Získat seznam všech poradců z případů
   const poradci = Array.from(new Set(pripady.map(p => p.poradce).filter(Boolean)));
 
-  // Vymazání všech případů a přidání pěti nových
-  useState(() => {
-    setPripady([
-      {
-        id: 1,
-        klient: 'Alena Novotná',
-        poradce: 'Jana Veselá',
-        aktualniKrok: 0,
-        krok1: { co: 'Byt', castka: '3500000', popis: 'Praha 4, novostavba' },
-        krok2: { termin: '2025-05-20', urok: '4.19' },
-        krok3: { banka: 'Česká spořitelna' },
-        kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
-        poznamka: 'První hypotéka.',
-        archivovano: false
-      },
-      {
-        id: 2,
-        klient: 'Petr Malý',
-        poradce: 'Jana Veselá',
-        aktualniKrok: 1,
-        krok1: { co: 'Dům', castka: '7800000', popis: 'Rodinný dům, Brno' },
-        krok2: { termin: '2025-05-22', urok: '3.89' },
-        krok3: { banka: 'Komerční banka' },
-        kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
-        poznamka: '',
-        archivovano: false
-      },
-      {
-        id: 3,
-        klient: 'Lucie Černá',
-        poradce: 'Petr Novák',
-        aktualniKrok: 2,
-        krok1: { co: 'Rekonstrukce', castka: '1200000', popis: 'Rekonstrukce bytu, Plzeň' },
-        krok2: { termin: '2025-05-25', urok: '4.05' },
-        krok3: { banka: 'ČSOB' },
-        kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
-        poznamka: 'Rekonstrukce pro mladý pár.',
-        archivovano: false
-      },
-      {
-        id: 4,
-        klient: 'Tomáš Dvořák',
-        poradce: 'Petr Novák',
-        aktualniKrok: 0,
-        krok1: { co: 'Pozemek', castka: '2500000', popis: 'Stavební pozemek, Ostrava' },
-        krok2: { termin: '2025-05-28', urok: '4.50' },
-        krok3: { banka: 'Raiffeisenbank' },
-        kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
-        poznamka: '',
-        archivovano: false
-      },
-      {
-        id: 5,
-        klient: 'Eva Králová',
-        poradce: 'Jana Veselá',
-        aktualniKrok: 1,
-        krok1: { co: 'Chata', castka: '1800000', popis: 'Rekreační objekt, Liberec' },
-        krok2: { termin: '2025-05-30', urok: '3.75' },
-        krok3: { banka: 'Moneta Money Bank' },
-        kroky: KROKY.slice(3).map(nazev => ({ nazev, termin: '', splneno: false, splnenoAt: undefined, poznamka: '' })),
-        poznamka: 'Letní rekreace.',
-        archivovano: false
-      }
-    ]);
-  });
-
   // Počet případů s blížícím se termínem
   const pocetBlizicich = pripady.filter(p => bliziciSeTerminy(p).length > 0).length;
 
@@ -387,47 +443,50 @@ function App() {
     showSnackbar('Případ byl úspěšně upraven', 'success');
   };
 
-  const exportToExcel = () => {
-    const data = pripady.map(p => ({
+  // Export do Excelu pomocí exceljs
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Pripady');
+    const data = pripady.map((p: PripadHypoteky) => ({
       ...p,
-      attachments: (p.kroky?.flatMap(k=>k.attachments||[]).map(a=>`${a.name}|${a.url}`) || []).join(';')
+      attachments: (p.kroky?.flatMap(k => k.attachments || []).map(a => `${a.name}|${a.url}`) || []).join(';')
     }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Pripady');
-    XLSX.writeFile(wb, `pripady-${new Date().toISOString().slice(0,10)}.xlsx`);
+    if (data.length > 0) {
+      sheet.columns = Object.keys(data[0]).map(key => ({ header: key, key }));
+      data.forEach(row => sheet.addRow(row));
+    }
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, `pripady-${new Date().toISOString().slice(0,10)}.xlsx`);
   };
 
-  const importFromExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Import z Excelu pomocí exceljs
+  const importFromExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
-      const imported = rows.map((r: Record<string, unknown>) => {
-        const pripad = r as unknown as PripadHypoteky;
-        // Pokud jsou přílohy ve stringu, rozparsuj je do kroku 0
-        if (pripad.kroky && pripad.kroky[0] && typeof pripad.kroky[0].attachments === 'string') {
-          const atts = (pripad.kroky[0].attachments as unknown as string).split(';').filter(Boolean).map((a: string) => {
-            const [name, url] = a.split('|');
-            return { id: Math.random().toString(36).slice(2), name, url, type: '' };
-          });
-          pripad.kroky[0].attachments = atts;
-        }
-        return pripad;
-      });
-      // Hromadný import: aktualizace nebo přidání podle ID
-      setPripady(prev => {
-        const ids = new Set(imported.map((p) => p.id));
-        const filtered = prev.filter(p=>!ids.has(p.id));
-        return [...filtered, ...imported];
-      });
-      showSnackbar('Import z Excelu proběhl úspěšně', 'success');
-    };
-    reader.readAsArrayBuffer(file);
+    const workbook = new ExcelJS.Workbook();
+    const buffer = await file.arrayBuffer();
+    await workbook.xlsx.load(buffer);
+    const sheet = workbook.worksheets[0];
+    const rows = sheet.getSheetValues().slice(2); // první řádek je undefined, druhý hlavička
+    const headers = sheet.getRow(1).values as string[];
+    const imported = rows.filter(Boolean).map((row) => {
+      const obj: Record<string, unknown> = {};
+      headers.forEach((h, i) => { if (h) obj[h as string] = (row as Record<string, unknown>)[i]; });
+      // Bezpečný převod na PripadHypoteky
+      const pripad = obj as unknown as PripadHypoteky;
+      if (pripad.kroky && pripad.kroky[0] && typeof pripad.kroky[0].attachments === 'string') {
+        const atts = (pripad.kroky[0].attachments as unknown as string).split(';').filter(Boolean).map((a: string) => {
+          const [name, url] = a.split('|');
+          return { id: Math.random().toString(36).slice(2), name, url, type: '' };
+        });
+        pripad.kroky[0].attachments = atts;
+      }
+      // Validace povinných polí
+      if (!pripad.id || !pripad.klient || !pripad.poradce) return null;
+      return pripad;
+    }).filter(Boolean) as PripadHypoteky[];
+    setPripady(imported);
   };
 
   const exportToJSON = () => {
@@ -462,7 +521,7 @@ function App() {
   const filtrovanePripady = useMemo(() => {
     return pripady.filter(p => {
       if (!zobrazArchivovane && p.archivovano) return false;
-      if (aktivniPoradce && p.poradce !== aktivniPoradce) return false;
+      if (poradce && p.poradce !== poradce) return false;
       if (stavKrokuFilter && KROKY[p.aktualniKrok + 3] !== stavKrokuFilter) return false;
       if (bankaFilter && (p.krok3?.banka || '').toLowerCase() !== bankaFilter.toLowerCase()) return false;
       if (terminFilter) {
@@ -481,7 +540,7 @@ function App() {
       }
       return true;
     });
-  }, [pripady, zobrazArchivovane, aktivniPoradce, stavKrokuFilter, bankaFilter, terminFilter, search]);
+  }, [pripady, zobrazArchivovane, poradce, stavKrokuFilter, bankaFilter, terminFilter, search]);
 
   // Autentizace
   const [authUser, setAuthUser] = useState<DemoUser | null>(() => getCurrentDemoUser());
@@ -599,7 +658,7 @@ function App() {
             {loading && (
               <Grid container spacing={3}>
                 {[1,2,3].map(i => (
-                  <Grid item xs={12} key={i}>
+                  <Grid key={i} sx={{width:'100%'}}>
                     <Skeleton variant="rectangular" height={120} animation="wave" sx={{borderRadius:5,mb:2}} />
                   </Grid>
                 ))}
@@ -619,8 +678,8 @@ function App() {
                 pripady={filtrovanePripady}
                 KROKY={KROKY}
                 poradci={poradci}
-                aktivniPoradce={aktivniPoradce}
-                setAktivniPoradce={setAktivniPoradce}
+                poradce={poradce}
+                setPoradce={setPoradce}
                 stavKrokuFilter={stavKrokuFilter}
                 setStavKrokuFilter={setStavKrokuFilter}
                 zobrazArchivovane={zobrazArchivovane}
@@ -635,6 +694,24 @@ function App() {
                 terminFilter={terminFilter}
                 setTerminFilter={setTerminFilter}
               />
+              {/* Výpis klientů (karet případů) */}
+              <Box sx={{flex:1,display:'flex',flexDirection:'column',gap:2}}>
+                {filtrovanePripady.length === 0 ? (
+                  <Typography variant="body1" color="text.secondary" sx={{mt:4}}>{t('no.cases')}</Typography>
+                ) : (
+                  filtrovanePripady.map(pripad => (
+                    <PripadCard
+                      key={pripad.id}
+                      pripad={pripad}
+                      onEdit={() => { setEditId(pripad.id); setOpenEditDialog(true); }}
+                      onDelete={(id: number) => setPripady(pripady => pripady.filter(p => p.id !== id))}
+                      onArchive={(id: number) => setPripady(pripady => pripady.map(p => p.id === id ? { ...p, archivovano: true } : p))}
+                      onUnarchive={(id: number) => setPripady(pripady => pripady.map(p => p.id === id ? { ...p, archivovano: false } : p))}
+                      onShowWorkflow={(id: number) => setOpenWorkflowSheet(id)}
+                    />
+                  ))
+                )}
+              </Box>
             </Box>
             {/* Tlačítka pro export/import */}
             <Box sx={{display:'flex',gap:2,mt:4,mb:2,justifyContent:'center'}}>

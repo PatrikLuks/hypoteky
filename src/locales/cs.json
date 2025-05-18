@@ -86,7 +86,7 @@
   "cases.active": "Počet rozpracovaných případů",
   "cases.completed": "Počet dokončených případů",
   "cases.archived": "Počet archivovaných případů",
-  "filter.advisor": "Aktivní poradce",
+  "filter.advisor": "Poradce",
   "filter.all.advisors": "Všichni poradci",
   "filter.step": "Filtrovat podle stavu kroku",
   "filter.all.steps": "Všechny stavy",
