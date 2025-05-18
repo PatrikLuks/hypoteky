@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, IconButton, Tooltip, Avatar, Button } from '@mui/material';
+import { Card, CardContent, Typography, Box, IconButton, Tooltip, Avatar, Button, LinearProgress } from '@mui/material';
 import { motion, useAnimation } from 'framer-motion';
 import { useSwipeable } from 'react-swipeable';
 import EditIcon from '@mui/icons-material/Edit';
@@ -59,6 +59,12 @@ const PripadCard: React.FC<PripadCardProps> = React.memo(({ pripad, KROKY, onEdi
               <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
                 {t('current.step')}: {KROKY[pripad.aktualniKrok + 3] || '-'}
               </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={((pripad.aktualniKrok + 1) / (KROKY.length - 3)) * 100}
+                sx={{ height: 8, borderRadius: 5, mt: 1, mb: 1, background: '#e3eafc', '& .MuiLinearProgress-bar': { background: '#1976d2' } }}
+                aria-label={t('current.step.progress') + ': ' + (pripad.aktualniKrok + 1) + '/' + (KROKY.length - 3)}
+              />
             </Box>
             <Tooltip title={t('edit.case')} arrow>
               <span>
