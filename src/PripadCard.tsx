@@ -11,7 +11,7 @@ import type { PripadCardProps } from './types';
 
 const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
-const PripadCard: React.FC<PripadCardProps> = React.memo(({ pripad, onEdit, onDelete, onArchive, onUnarchive, onShowWorkflow }) => {
+const PripadCard: React.FC<PripadCardProps> = React.memo(({ pripad, KROKY, onEdit, onDelete, onArchive, onUnarchive, onShowWorkflow }) => {
   const { t } = useTranslation();
   const controls = useAnimation();
 
@@ -56,6 +56,9 @@ const PripadCard: React.FC<PripadCardProps> = React.memo(({ pripad, onEdit, onDe
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>{pripad.klient}</Typography>
               <Typography variant="body2" color="text.secondary">{t('advisor')}: {pripad.poradce}</Typography>
+              <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
+                {t('current.step')}: {KROKY[pripad.aktualniKrok + 3] || '-'}
+              </Typography>
             </Box>
             <Tooltip title={t('edit.case')} arrow>
               <span>

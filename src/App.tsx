@@ -703,6 +703,7 @@ function App() {
                     <PripadCard
                       key={pripad.id}
                       pripad={pripad}
+                      KROKY={KROKY}
                       onEdit={() => { setEditId(pripad.id); setOpenEditDialog(true); }}
                       onDelete={(id: number) => setPripady(pripady => pripady.filter(p => p.id !== id))}
                       onArchive={(id: number) => setPripady(pripady => pripady.map(p => p.id === id ? { ...p, archivovano: true } : p))}

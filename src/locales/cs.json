@@ -100,5 +100,6 @@
   "filter.save": "Uložit filtr",
   "filter.saved": "Uložené filtry",
   "filter.share": "Sdílet",
-  "search.placeholder": "Vyhledat klienta, banku, poznámku..."
+  "search.placeholder": "Vyhledat klienta, banku, poznámku...",
+  "current.step": "Aktuální krok"
 }

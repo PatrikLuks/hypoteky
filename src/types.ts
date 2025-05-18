@@ -80,6 +80,7 @@ export interface DashboardProps {
 
 export interface PripadCardProps {
   pripad: PripadHypoteky;
+  KROKY: string[];
   onEdit: (pripad: PripadHypoteky) => void;
   onDelete: (id: number) => void;
   onArchive: (id: number) => void;
